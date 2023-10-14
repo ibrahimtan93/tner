@@ -108,7 +108,10 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
     else:
         data = load_dataset(dataset, use_auth_token=use_auth_token)
     label2id = get_hf_label2id(dataset, cache_dir)
-    data = {k: {"tokens": data[k]["tokens"], "tags": data[k]["tags"]} for k in data.keys()}
+    tag_key = "tags"
+    if dataset == "tomaarsen/MultiCoNER":
+        tag_key = "ner_tags"
+    data = {k: {"tokens": data[k]["tokens"], "tags": data[k][tag_key]} for k in data.keys()}
     return data, label2id
 
 
