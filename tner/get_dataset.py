@@ -103,9 +103,7 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         - data: a dictionary of {"tokens": [list of tokens], "tags": [list of tags]}
         - label2id: a dictionary mapping from label to id
     """
-    tag_key = "tags"
     if dataset == "tomaarsen/MultiCoNER":
-        tag_key = "ner_tags"
         ds_multi = load_dataset(dataset, "multi", use_auth_token=use_auth_token)
         ds_en = load_dataset(dataset, "en", use_auth_token=use_auth_token)
         ds_tr = load_dataset(dataset, "tr", use_auth_token=use_auth_token)
@@ -130,7 +128,7 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         data = load_dataset(dataset, use_auth_token=use_auth_token)
     label2id = get_hf_label2id(dataset, cache_dir)
 
-    data = {k: {"tokens": data[k]["tokens"], "tags": data[k][tag_key]} for k in data.keys()}
+    data = {k: {"tokens": data[k]["tokens"], "tags": data[k]["tags"]} for k in data.keys()}
     return data, label2id
 
 
