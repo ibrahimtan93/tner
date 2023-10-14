@@ -9,12 +9,11 @@ from typing import Dict, List
 from itertools import chain
 from os.path import join as pj
 
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 CACHE_DIR = f"{os.path.expanduser('~')}/.cache/tner"
 CHECKSUM_SHARED_LABEL = 'a6b6bbfd6ddf3f990ee6b335ade46429'
-
 
 __all__ = (
     "get_dataset",
@@ -60,6 +59,22 @@ def get_hf_label2id(dataset, cache_dir: str = None):
     @param cache_dir: [optional] huggingface cache directly
     @return: a dictionary mapping from label to id
     """
+    if dataset == "tomaarsen/MultiCoNER":
+        return dict({
+            "O": 0,
+            "B-PER": 1,
+            "I-PER": 2,
+            "B-LOC": 3,
+            "I-LOC": 4,
+            "B-CORP": 5,
+            "I-CORP": 6,
+            "B-GRP": 7,
+            "I-GRP": 8,
+            "B-PROD": 9,
+            "I-PROD": 10,
+            "B-CW": 11,
+            "I-CW": 12,
+        })
     url = f"https://huggingface.co/datasets/tner/label2id/raw/main/files/{os.path.basename(dataset)}.json"
     cache_dir = CACHE_DIR if cache_dir is None else cache_dir
     path = pj(cache_dir, f"{dataset}.label2id.json")
@@ -151,8 +166,8 @@ def load_conll_format_file(data_path: str, label2id: Dict = None):
     for l in keys:
         if l.startswith('B'):
             entity = l[2:]
-            if 'I-'+entity not in label2id:
-                label2id.update({'I-'+entity: len(label2id)})
+            if 'I-' + entity not in label2id:
+                label2id.update({'I-' + entity: len(label2id)})
                 logging.warning(f'found entities without I label2id (label2id was updated):\n\t - {entity}')
     labels = [[label2id[__l] for __l in _l] for _l in labels]
     data = {"tokens": inputs, "tags": labels}
@@ -200,7 +215,6 @@ def get_dataset_single(dataset: str = None,
         data, label2id = get_hf_dataset(
             dataset, dataset_name=dataset_name, cache_dir=cache_dir, use_auth_token=use_auth_token
         )
-
     else:
         assert local_dataset is not None, "need either of `dataset` or `local_dataset`"
         data, label2id = get_conll_format_dataset(local_dataset)
@@ -226,7 +240,8 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
         entities = set('-'.join(i.split('-')[1:]) for i in _label2id.keys() if i != 'O')
         for entity in entities:
             normalized_entity = [k for k, v in unified_label_set.items() if entity in v]
-            assert len(normalized_entity) <= 1, f'duplicated entity found in the shared label set\n {normalized_entity} \n {entity}'
+            assert len(
+                normalized_entity) <= 1, f'duplicated entity found in the shared label set\n {normalized_entity} \n {entity}'
             if len(normalized_entity) == 0:
                 # logging.warning(f'Entity `{entity}` is not found in the shared label set {unified_label_set}. '
                 #               f'Original entity (`{entity}`) will be used as label.')
@@ -238,7 +253,7 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
     normalized_labels = list(set(normalized_labels))
     # input(normalized_labels)
     if label2id is not None:
-        assert all(i in label2id.keys() for i in normalized_labels),\
+        assert all(i in label2id.keys() for i in normalized_labels), \
             f"missing entity in label2id {label2id.keys()}: {normalized_labels}"
         normalized_label2id = label2id
     else:

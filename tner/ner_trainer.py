@@ -13,6 +13,8 @@ from distutils.dir_util import copy_tree
 import torch
 import transformers
 
+from datasets import DatasetDict
+
 from .get_dataset import get_dataset
 from .ner_model import TransformersNER
 from .util import json_save, json_load, get_random_string
@@ -289,7 +291,7 @@ class GridSearcher:
     def __init__(self,
                  checkpoint_dir: str,
                  dataset: List or str = None,
-                 local_dataset: List or Dict = None,
+                 local_dataset: List or Dict or DatasetDict = None,
                  dataset_split_train: str = 'train',
                  dataset_split_valid: str = 'validation',
                  dataset_name: List or str = None,

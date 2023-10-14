@@ -8,6 +8,7 @@ nohup.out
 build
 *.egg-info
 dist
+.venv
 
 tests/test_ckpt*
 data
