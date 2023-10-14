@@ -9,7 +9,7 @@ from typing import Dict, List
 from itertools import chain
 from os.path import join as pj
 
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, concatenate_datasets
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 CACHE_DIR = f"{os.path.expanduser('~')}/.cache/tner"
@@ -103,14 +103,33 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         - data: a dictionary of {"tokens": [list of tokens], "tags": [list of tags]}
         - label2id: a dictionary mapping from label to id
     """
-    if dataset_name is not None:
+    tag_key = "tags"
+    if dataset == "tomaarsen/MultiCoNER":
+        tag_key = "ner_tags"
+        ds_multi = load_dataset(dataset, "multi", use_auth_token=use_auth_token)
+        ds_en = load_dataset(dataset, "en", use_auth_token=use_auth_token)
+        ds_tr = load_dataset(dataset, "tr", use_auth_token=use_auth_token)
+
+        ds_train = concatenate_datasets([ds_multi["train"], ds_en["train"], ds_tr["train"]])
+        ds_test = concatenate_datasets([ds_multi["test"], ds_en["test"], ds_tr["test"]])
+        ds_validation = concatenate_datasets([ds_multi["validation"], ds_en["validation"], ds_tr["validation"]])
+
+        ds_train = ds_train.rename_column("ner_tags", "tags").shuffle(seed=42)
+        ds_test = ds_test.rename_column("ner_tags", "tags").shuffle(seed=42)
+        ds_validation = ds_validation.rename_column("ner_tags", "tags").shuffle(seed=42)
+
+        data = DatasetDict({
+            "train": ds_train,
+            "test": ds_test,
+            "validation": ds_validation
+        })
+
+    elif dataset_name is not None:
         data = load_dataset(dataset, dataset_name, use_auth_token=use_auth_token)
     else:
         data = load_dataset(dataset, use_auth_token=use_auth_token)
     label2id = get_hf_label2id(dataset, cache_dir)
-    tag_key = "tags"
-    if dataset == "tomaarsen/MultiCoNER":
-        tag_key = "ner_tags"
+
     data = {k: {"tokens": data[k]["tokens"], "tags": data[k][tag_key]} for k in data.keys()}
     return data, label2id
 
