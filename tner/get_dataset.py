@@ -117,9 +117,9 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         ds_validation = ds_validation.rename_column("ner_tags", "tags").shuffle(seed=42)
 
         data = DatasetDict({
-            "train": ds_train,
-            "test": ds_test,
-            "validation": ds_validation
+            "train": ds_test,
+            "test": ds_validation,
+            "validation": ds_train
         })
 
     elif dataset_name is not None:
