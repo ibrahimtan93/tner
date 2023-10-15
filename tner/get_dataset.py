@@ -118,7 +118,7 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         ds_test = ds_test.rename_column("ner_tags", "tags").shuffle(seed=42)
         ds_validation = ds_validation.rename_column("ner_tags", "tags").shuffle(seed=42)
 
-        if len(ds_split) > 0:
+        if len(ds_split) > 1:
             percentage = int(ds_split[1])
             ds_test = ds_test.select(range(len(ds_test) // percentage))
             ds_validation = ds_validation.select(range(len(ds_test) // percentage))
