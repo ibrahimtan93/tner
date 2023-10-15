@@ -103,7 +103,7 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         - data: a dictionary of {"tokens": [list of tokens], "tags": [list of tags]}
         - label2id: a dictionary mapping from label to id
     """
-    if dataset == "tomaarsen/MultiCoNER":
+    if dataset.startswith("tomaarsen/MultiCoNER"):
         ds_multi = load_dataset(dataset, "multi", use_auth_token=use_auth_token)
         ds_en = load_dataset(dataset, "en", use_auth_token=use_auth_token)
         ds_tr = load_dataset(dataset, "tr", use_auth_token=use_auth_token)
@@ -115,6 +115,14 @@ def get_hf_dataset(dataset: str = 'tner/conll2003',
         ds_train = ds_train.rename_column("ner_tags", "tags").shuffle(seed=42)
         ds_test = ds_test.rename_column("ner_tags", "tags").shuffle(seed=42)
         ds_validation = ds_validation.rename_column("ner_tags", "tags").shuffle(seed=42)
+
+        ds_splt = dataset.split(':')
+        if len(ds_splt) > 0:
+            percentage = int(ds_splt[1])
+            ds_test = ds_test.select(range(len(ds_test) // percentage))
+            ds_validation = ds_validation.select(range(len(ds_test) // percentage))
+            ds_train = ds_train.select(range(len(ds_test) // percentage))
+
 
         data = DatasetDict({
             "train": ds_test,
